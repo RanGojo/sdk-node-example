@@ -1,4 +1,4 @@
-import { MetaResponse, QuoteResponse, RoutingResultType, SwapResponse, Token, TransactionType } from "rango-sdk-basic"
+import { CheckApprovalResponse, MetaResponse, QuoteResponse, RoutingResultType, StatusResponse, SwapResponse, Token, TransactionStatus, TransactionType } from "rango-sdk-basic"
 
 export function logMeta(meta: MetaResponse) {
     const { tokens, blockchains } = meta
@@ -33,14 +33,43 @@ export function logSwap(swap: SwapResponse) {
         const tx = swap.tx
         if (tx?.type === TransactionType.EVM) {
             if (tx.approveData && tx.approveTo) {
-                console.log("- user doesn't have enough approval")
-                console.log("- signing the approve transaction ...")
+                console.log(`- user doesn't have enough approval`)
+                console.log(`- signing the approve transaction ...`)
             } else {
-                console.log("- user has enough approval")
-                console.log("- signing the main transaction ...")
+                console.log(`- user has enough approval`)
+                console.log(`- signing the main transaction ...`)
             }
         }
     } else {
         console.log(`- error creating the transaction, ${error}`)
     }
+}
+
+export function logSwapStatus(state: StatusResponse) {
+    const { status, bridgeData } = state
+    console.log(`- transaction status: ${status}`)
+    if (status === TransactionStatus.SUCCESS) {
+        console.log(`- Hooray! Swap succeeds!`)
+    } else if (status === TransactionStatus.FAILED) {
+        console.log(`- Swap failed!`)
+    }
+    if (status && [TransactionStatus.SUCCESS, TransactionStatus.FAILED].includes(status)) {
+        console.log(`   - Output token: ${state.output?.receivedToken.blockchain}.${state.output?.receivedToken.symbol}`)
+        console.log(`   - Output token type: ${state.output?.type}`)
+        console.log(`   - Output token amount: ${state.output?.amount}`)
+        console.log(`   - Inbound transaction hash: ${bridgeData?.srcTxHash}`)
+        console.log(`   - Outbound transaction hash: ${bridgeData?.destTxHash}`)
+    }
+}
+
+export function logTransactionHash(hash: string, isApproval: boolean) {
+    if (isApproval) {
+        console.log(`- approve transaction hash: ${hash}`)
+    } else {
+        console.log(`- main transaction hash: ${hash}`)
+    }
+}
+
+export function logApprovalResponse(isApproved: boolean) {
+    console.log(`- does user have enough approve amount? ${isApproved}`)
 }
